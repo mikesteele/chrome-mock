@@ -1,41 +1,34 @@
+const jsdom = require('jsdom');
+const { JSDOM } = jsdom;
+
 class ChromeMock {
   constructor() {
     this.tabs = [];
-    this.extensions = [];
     this.chrome = {
-      runtime: {
-        sendMessage: onRuntimeSendMessage,
-      }
+      runtime: {}
     }
   }
 
-  createTab(url, options) {
-    if (!url) {
-      throw new Error('URL required to create tab.');
-    }
+  createTab(options) {
+    const tabId = this.tabs.length;
     const tab = {
-      tabId: 1,
-      window: new JSDOM(),
-      close: () => {},
+      tabId: tabId,
+      window: (new JSDOM('', { runScripts: 'dangerously' })).window,
+      close: () => {}, // TODO
       __onRuntimeMessageListeners: []
     };
-    tab.window.chrome = this.chrome;
-    tab.window.chrome.runtime.onMessage = this.addRuntimeMessageListener.bind(this, tab.tabId);
-    tab.window.chrome.runtime.sendMessage = this.onRuntimeSendMessage.bind(this, tab.tabId);
-    if (this.extensions.length) {
-      // Check if need to inject content_scripts
-    }
     this.tabs.push(tab);
-    return tab;
-  }
-
-  createExtension(manifest) {
-    // Don't inject into pre-existing tabs, as Chrome doesn't either
-    const extension = {
-      manifest: manifest,
-      browser_action: 'TODO',
-      background: 'TODO'
-    };
+    this.tabs[tabId].window.chrome = this.chrome;
+    this.tabs[tabId].window.chrome.runtime.onMessage = this.addRuntimeMessageListener.bind(this, tabId);
+    this.tabs[tabId].window.chrome.runtime.sendMessage = this.onRuntimeSendMessage.bind(this, tabId);
+    if (options.content_scripts) {
+      options.content_scripts.forEach(cs => {
+        const script = this.tabs[tabId].window.document.createElement('script');
+        script.innerHTML = cs;
+        this.tabs[tabId].window.document.body.appendChild(script);
+      });
+    }
+    return this.tabs[tabId];
   }
 
   addRuntimeMessageListener(tabId, callback) {
@@ -50,13 +43,21 @@ class ChromeMock {
         id: senderTabId // TODO - What to do for background page?
       }
     }
-    if (!this.tabs[tabId]) {
-      throw new Error('No such tab with tabId'); // TODO - What does Chrome do?
-    }
     if (tabId) {
-      this.tabs[tabId].__onRuntimeMessageListeners.forEach(listener => listener(message, sender, sendResponse));
+      if (!this.tabs[tabId]) {
+        throw new Error('No such tab with tabId'); // TODO - What does Chrome do?
+      } else {
+        this.tabs[tabId].__onRuntimeMessageListeners.forEach(listener => listener(message, sender, sendResponse));
+      }
     } else {
       // Call all tabs
+      this.tabs.forEach(tab => {
+        tab.__onRuntimeMessageListeners.forEach(listener => {
+          listener(message, sender, sendResponse)
+        });
+      });
     }
   }
 }
+
+module.exports = new ChromeMock();
