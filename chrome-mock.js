@@ -21,6 +21,7 @@ class ChromeMock {
     };
     tab.window.chrome = this.chrome;
     tab.window.chrome.runtime.onMessage = this.addRuntimeMessageListener.bind(this, tab.tabId);
+    tab.window.chrome.runtime.sendMessage = this.onRuntimeSendMessage.bind(this, tab.tabId);
     if (this.extensions.length) {
       // Check if need to inject content_scripts
     }
@@ -43,7 +44,12 @@ class ChromeMock {
     }
   }
 
-  onRuntimeSendMessage(tabId, message, sendResponse) {
+  onRuntimeSendMessage(senderTabId, tabId, message, sendResponse) {
+    const sender = {
+      tab: {
+        id: senderTabId // TODO - What to do for background page?
+      }
+    }
     if (!this.tabs[tabId]) {
       throw new Error('No such tab with tabId'); // TODO - What does Chrome do?
     }
