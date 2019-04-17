@@ -22,4 +22,22 @@ chrome.tabs.sendMessage(1, { ok: true }, () => {});
 ChromeMock.closeTab(1);
 // Clean up
 
+//----------------------------//
 
+const extension = ChromeMock.createExtension({
+  browser_action: '/path/to/js',
+  background: '/path/to/js'
+});
+
+// extension: extensionId
+
+extension.background.window
+extension.browser_action.window
+
+//----------------------------//
+
+const manifest = require('./manifest.json');
+const extension = ChromeMock.createExtension(manifest);
+const tab1 = ChromeMock.createTab('http://google.com');
+
+expect(tab1.window.DC).to.exist; // Should've injected into tab
