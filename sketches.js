@@ -38,6 +38,6 @@ extension.browser_action.window
 
 const manifest = require('./manifest.json');
 const extension = ChromeMock.createExtension(manifest);
-const tab1 = ChromeMock.createTab('http://google.com');
+const tab1 = ChromeMock.createTab('http://google.com'); // ChromeMock.createTab('http://google.com', { html: xxx });
 
 expect(tab1.window.DC).to.exist; // Should've injected into tab
