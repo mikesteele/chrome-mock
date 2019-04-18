@@ -21,6 +21,8 @@ chrome.runtime.sendMessage
 ````
 chrome.tabs.query
 chrome.tabs.sendMessage
+
+Isolated world for content_scripts
 ````
 
 
