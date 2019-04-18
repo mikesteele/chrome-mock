@@ -8,6 +8,22 @@
 
 #### Single window
 
+### Roadmap status
+
+#### Supported
+
+````
+chrome.runtime.sendMessage
+````
+
+#### To be implemented
+
+````
+chrome.tabs.query
+chrome.tabs.sendMessage
+````
+
+
 ## API
 
 ```
