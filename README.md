@@ -2,7 +2,9 @@
 
 ### Caveats
 
-#### Lack of isolated world
+#### No isolated world
 
 #### XSS / Self-XSS
+
+#### Single window
 
