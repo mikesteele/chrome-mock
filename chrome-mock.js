@@ -3,24 +3,44 @@ const { JSDOM } = jsdom;
 
 class ChromeMock {
   constructor() {
-    this.tabs = [];
-    this.chrome = {
-      runtime: {}
+    this.reset = this.reset.bind(this);
+    this.reset();
+  }
+
+  createBrowserAction(options) {
+    const browserAction = {
+      window: (new JSDOM('', { runScripts: 'dangerously' })).window
+    };
+    this.browserAction = browserAction;
+    this.browserAction.window.chrome = {
+      tabs: {
+        query: this.onBrowserActionTabsQuery.bind(this),
+        sendMessage: this.onRuntimeSendMessage.bind(this, null)
+      }
+    };
+    if (options.script) {
+      const script = this.browserAction.window.document.createElement('script');
+      script.innerHTML = options.script;
+      this.browserAction.window.document.body.appendChild(script);
     }
+    return this.browserAction;
   }
 
   createTab(options) {
     const tabId = this.tabs.length;
     const tab = {
+      id: tabId,
       tabId: tabId,
       window: (new JSDOM('', { runScripts: 'dangerously' })).window,
-      close: () => {}, // TODO
       __onRuntimeMessageListeners: []
     };
     this.tabs.push(tab);
-    this.tabs[tabId].window.chrome = this.chrome;
-    this.tabs[tabId].window.chrome.runtime.onMessage = this.addRuntimeMessageListener.bind(this, tabId);
-    this.tabs[tabId].window.chrome.runtime.sendMessage = this.onRuntimeSendMessage.bind(this, tabId);
+    this.tabs[tabId].window.chrome = {
+      runtime: {
+        onMessage: this.addRuntimeMessageListener.bind(this, tabId),
+        sendMessage: this.onRuntimeSendMessage.bind(this, tabId)
+      }
+    };
     if (options.content_scripts) {
       options.content_scripts.forEach(cs => {
         const script = this.tabs[tabId].window.document.createElement('script');
@@ -37,13 +57,17 @@ class ChromeMock {
     }
   }
 
+  onBrowserActionTabsQuery(options, sendResponse) {
+    sendResponse(this.tabs.map(tab => ({ id: tab.id })));
+  }
+
   onRuntimeSendMessage(senderTabId, tabId, message, sendResponse) {
     const sender = {
       tab: {
         id: senderTabId // TODO - What to do for background page?
       }
     }
-    if (tabId) {
+    if (typeof tabId === 'number') {
       if (!this.tabs[tabId]) {
         throw new Error('No such tab with tabId'); // TODO - What does Chrome do?
       } else {
@@ -57,6 +81,11 @@ class ChromeMock {
         });
       });
     }
+  }
+
+  reset() {
+    this.browserAction = null;
+    this.tabs = [];
   }
 }
 
