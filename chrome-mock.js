@@ -27,11 +27,12 @@ class ChromeMock {
   }
 
   createTab(options) {
+    const html = options.html || '';
     const tabId = this.tabs.length;
     const tab = {
       id: tabId,
       tabId: tabId,
-      window: (new JSDOM('', { runScripts: 'dangerously' })).window,
+      window: (new JSDOM(html, { runScripts: 'dangerously' })).window,
       __onRuntimeMessageListeners: []
     };
     this.tabs.push(tab);
@@ -64,13 +65,11 @@ class ChromeMock {
   onRuntimeSendMessage(senderTabId, tabId, message, sendResponse) {
     const sender = {
       tab: {
-        id: senderTabId // TODO - What to do for background page?
+        id: senderTabId
       }
     }
     if (typeof tabId === 'number') {
-      if (!this.tabs[tabId]) {
-        throw new Error('No such tab with tabId'); // TODO - What does Chrome do?
-      } else {
+      if (this.tabs[tabId]) {
         this.tabs[tabId].__onRuntimeMessageListeners.forEach(listener => listener(message, sender, sendResponse));
       }
     } else {
