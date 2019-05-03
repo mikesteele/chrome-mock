@@ -13,7 +13,7 @@ chrome.runtime.onMessage
 chrome.runtime.sendMessage
 ````
 
-See `index.test.js` for examples of usage in tests.
+See `chrome-mock.test.js` for examples of usage in tests.
 
 ## API
 
