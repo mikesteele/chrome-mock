@@ -32,12 +32,6 @@ const tab = ChromeMock.createTab({
 });
 ```
 
-#### Set tab as active
-
-```
-ChromeMock.setActiveTab(tab.id);
-```
-
 #### Tab API
 
 ```
